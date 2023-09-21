@@ -151,7 +151,7 @@ about_page <- div(tags$head(tags$style(HTML(css_content))),
                                    icon('user-circle', "fa-8x")),
                                div(
                                  class = "team-content",
-                                 h3(class = 'name', "Aluno 1"),
+                                 h3(class = 'name', "Fernando Hitoshi"),
                                  h4(class = 'title', "Estatistica e Ciencia de Dados  - ICMC USP")
                                ),
                                tags$ul(class = 'social',
@@ -172,7 +172,7 @@ about_page <- div(tags$head(tags$style(HTML(css_content))),
                                    icon('user-circle', "fa-8x")),
                                div(
                                  class = "team-content",
-                                 h3(class = 'name', "Aluno 1"),
+                                 h3(class = 'name', "André Sacilotti"),
                                  h4(class = 'title', "Estatistica e Ciencia de Dados  - ICMC USP")
                                ),
                                tags$ul(class = 'social',
@@ -194,7 +194,7 @@ about_page <- div(tags$head(tags$style(HTML(css_content))),
                                    icon('user-circle', "fa-8x")),
                                div(
                                  class = "team-content",
-                                 h3(class = 'name', "Aluno 1"),
+                                 h3(class = 'name', "Cícero Fonseca"),
                                  h4(class = 'title', "Estatistica e Ciencia de Dados  - ICMC USP")
                                ),
                                tags$ul(class = 'social',
@@ -220,7 +220,7 @@ about_page <- div(tags$head(tags$style(HTML(css_content))),
                                    icon('user-circle', "fa-8x")),
                                div(
                                  class = "team-content",
-                                 h3(class = 'name', "Aluno 1"),
+                                 h3(class = 'name', "Helber Moraes"),
                                  h4(class = 'title', "Estatistica e Ciencia de Dados  - ICMC USP")
                                ),
                                tags$ul(class = 'social',
@@ -241,7 +241,7 @@ about_page <- div(tags$head(tags$style(HTML(css_content))),
                                    icon('user-circle', "fa-8x")),
                                div(
                                  class = "team-content",
-                                 h3(class = 'name', "Aluno 1"),
+                                 h3(class = 'name', "João Guedes"),
                                  h4(class = 'title', "Estatistica e Ciencia de Dados  - ICMC USP")
                                ),
                                tags$ul(class = 'social',
@@ -263,7 +263,7 @@ about_page <- div(tags$head(tags$style(HTML(css_content))),
                                    icon('user-circle', "fa-8x")),
                                div(
                                  class = "team-content",
-                                 h3(class = 'name', "Aluno 1"),
+                                 h3(class = 'name', "Wemerson Dos Santos"),
                                  h4(class = 'title', "Estatistica e Ciencia de Dados  - ICMC USP")
                                ),
                                tags$ul(class = 'social',
@@ -289,7 +289,7 @@ about_page <- div(tags$head(tags$style(HTML(css_content))),
                                    icon('user-circle', "fa-8x")),
                                div(
                                  class = "team-content",
-                                 h3(class = 'name', "Aluno 1"),
+                                 h3(class = 'name', "Willian Franco"),
                                  h4(class = 'title', "Estatistica e Ciencia de Dados  - ICMC USP")
                                ),
                                tags$ul(class = 'social',
