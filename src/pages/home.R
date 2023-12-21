@@ -196,7 +196,7 @@ function hide_modal(event){
   $('#show_filters').on('click', show_modal);
   
   
-  let input_ids = ['analysis_type_input', 'year_filter_input', 'age_window_filter_input', 'ethnicity_type_input', 'state_filter_input', 'sickness_filter_input', 'ethnicity_type_filter_input1'];
+  let input_ids = ['analysis_type_input', 'year_filter_input', 'age_window_filter_input', 'ethnicity_type_input', 'state_filter_input', 'ethnicity_type_filter_input1'];
   $('#filters-nav > span').each( function(index){
     let elem = $('#' + input_ids[index]);
     let content = elem.val();

@@ -14,7 +14,11 @@ get_test_timeseries_split <- function(output, input, decomposed_data){
 
 model_fit <- function(output, input, train_series){
     if(input$model_choice == "Auto ARIMA (Seleção Automatica)"){
+        train_series <- ts(train_series, frequency=input$sazofreq)
         fit <- auto.arima(train_series)
+    }else if(input$model_choice == "SARIMA"){
+        train_series <- ts(train_series, frequency=input$sazofreq)
+        fit <- arima(train_series, order=c(input$ARIMA_p,input$ARIMA_i,input$ARIMA_q), seasonal=list(order=c(input$ARIMA_Sp,input$ARIMA_Si,input$ARIMA_Sq), period=input$sazofreq))
     }else if(input$model_choice == "ARIMA"){
         fit <- arima(train_series, order=c(input$ARIMA_p,input$ARIMA_i,input$ARIMA_q), method="ML")
     }else if(input$model_choice == "AR"){
@@ -24,6 +28,9 @@ model_fit <- function(output, input, train_series){
     }else if(input$model_choice == "ARMA"){
         fit <- arima(train_series, order=c(0,input$ARIMA_i,input$ARIMA_q), method="ML")            
     }
+    print(train_series)
+    print(fit)
+    print(summary(fit))
     return(fit)
 }
 
@@ -82,28 +89,47 @@ get_residual_hypothesis_testing  <- function(output, input, adjusted_fit){
 }
 
 
-get_forecast_data <- function(output, input, adjusted_fit, valores_ajustados_tendencia, valores_ajustados_sazo, train_series){
+get_forecast_data <- function(output, input, adjusted_fit, valores_ajustados_tendencia, valores_ajustados_sazo, train_series, lambda){
     prediction_steps_slider = 2
-    forecast_data = forecast(adjusted_fit, h=(input$test_steps_slider + prediction_steps_slider))
-
+    print(adjusted_fit)
+    if(input$model_choice == "SARIMA" || input$model_choice =="Auto ARIMA (Seleção Automatica)"){
+        train_series <- ts(train_series, frequency=input$sazofreq)
+    }
+    forecast_data = forecast::forecast(adjusted_fit, h=(input$test_steps_slider + prediction_steps_slider))
+    # if(input$model_choice == "SARIMA"){
+    #     forecast_data = predict(adjusted_fit, h.ahead=(input$test_steps_slider + prediction_steps_slider))
+    # }else{
+        
+    # }
     
+
+    print(lambda)
     forecast_data$x = train_series
 
 
     
 
     if(input$transformation_tendency2 != "Não Aplicar"){
-        ff =  na.omit(valores_ajustados_tendencia)
-        transformation_part = ff[(length(ff)-length(forecast_data$mean)+1): length(ff)]
-        transformation_part2 = ff[1: (length(ff) - length(forecast_data$mean))]
-        min_transformation = min(ff)
-        forecast_data$mean = forecast_data$mean + transformation_part 
-        forecast_data$lower = forecast_data$lower + transformation_part
-        forecast_data$upper = forecast_data$upper + transformation_part
+        if(input$transformation_tendency2 == "Box-Cox"){
+            print(forecast_data$mean)
+            forecast_data$mean = InvBoxCox(forecast_data$mean, lambda=lambda)
+            forecast_data$lower = InvBoxCox(forecast_data$lower , lambda=lambda)
+            forecast_data$upper = InvBoxCox(forecast_data$upper, lambda=lambda)
+        }else{
+            ff =  na.omit(valores_ajustados_tendencia)
+            transformation_part = ff[(length(ff)-length(forecast_data$mean)+1): length(ff)]
+            transformation_part2 = ff[1: (length(ff) - length(forecast_data$mean))]
+            min_transformation = min(ff)
+            forecast_data$mean = forecast_data$mean + transformation_part 
+            forecast_data$lower = forecast_data$lower + transformation_part
+            forecast_data$upper = forecast_data$upper + transformation_part
+        }
+        
         #forecast_data$x + transformation_part2
     }
 
     if(input$transformation_sazonalidade != "Não Aplicar"){
+        
         ff = na.omit(valores_ajustados_sazo)
         transformation_part = ff[(length(ff)-length(forecast_data$mean)+1): length(ff)]
         min_transformation = min(ff)
@@ -121,10 +147,19 @@ get_forecast_data <- function(output, input, adjusted_fit, valores_ajustados_ten
 
 }
 
-get_inverse_transformed_plot <- function(output, input, adjusted_fit, valores_ajustados_tendencia, valores_ajustados_sazo, test_series, decomposed_data, train_series){
-    S = get_forecast_data(output, input, adjusted_fit, valores_ajustados_tendencia, valores_ajustados_sazo, train_series)
+get_inverse_transformed_plot <- function(output, input, adjusted_fit, valores_ajustados_tendencia, valores_ajustados_sazo, test_series, decomposed_data, train_series, lambda){
+    
+    S = get_forecast_data(output, input, adjusted_fit, valores_ajustados_tendencia, valores_ajustados_sazo, train_series, lambda)
 
-    test_series = ts(test_series,start = c(length(decomposed_data)-input$test_steps_slider),frequency = 1)
+    if(input$model_choice == "SARIMA" || input$model_choice =="Auto ARIMA (Seleção Automatica)"){
+        train_series <- ts(train_series, frequency=input$sazofreq)
+        test_series = ts(test_series,start = c((length(train_series)+input$sazofreq-1)/input$sazofreq),frequency = input$sazofreq)
+        # test_series <- ts(test_series, frequency=input$sazofreq)
+    }else{
+        test_series = ts(test_series,start = c(length(decomposed_data)-input$test_steps_slider),frequency = 1)
+    }
+
+    
 
     # if(input$transformation_tendency2 != "Não Aplicar"){
     #     ff = valores_ajustados_tendencia  %>% replace(is.na(.), 0)
@@ -148,17 +183,21 @@ get_inverse_transformed_plot <- function(output, input, adjusted_fit, valores_aj
     }
     
     
-    output$forecast_metrics_ <- renderTable({
+    output$forecast_metrics_ <- renderPlotly({
         metrics <- data.table(
         
             valsaux = valsaux,
             rmse = rmses
         )
-        colnames(metrics) <- c("Tamanho do Horizonte de Predição (i)", "RMSE@i")
-        metrics
+        # colnames(metrics) <- c("Tamanho do Horizonte de Predição (i)", "RMSE@i")
+        fig <- plot_ly(metrics, x = ~valsaux, y = ~rmse, type = 'scatter', mode = 'lines') %>% layout(
+            title = "RMSE para diferentes passos de previsão", xaxis = list(title = "Passos de Previsão"), yaxis = list (title = "Root Mean Squared Error (RMSE)"))
+        fig
     })
 
-    fig <- autoplot(S)+ autolayer(S, series="Previsão", showgap=F) + autolayer(test_series, series="Passos de Teste")
+     fig <- autoplot(S)+ autolayer(S, series="Previsão", showgap=F) + autolayer(test_series, series="Passos de Teste")
+
+    
     return(fig)
 
 }

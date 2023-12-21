@@ -229,7 +229,7 @@ server <- function(input, output, session) {
     
     
     observeEvent(input$confirm_filters, {
-    #   dt(dataset_after_variance_transformation_base(output, input, df_filtered()))
+    #   dt()
     #   dt_i(dataset_after_variance_transformation2(output, input, dt, data_menor()))
     #   dt_ts(dataset_after_variance_transformation1(output, input, dt, data_menor()))
     #  dt_i_tendency(dataset_after_tendency_transformation(output, input, dt_i()))
@@ -256,8 +256,10 @@ server <- function(input, output, session) {
     #   })
     })
     
-
+    lambda <- reactiveVal({0})
     valores_ajustados_tendencia <- reactive({
+        lambda_ = BoxCox.lambda(  dt() )
+        lambda(lambda_)
         dataset_after_tendency_transformation(output, input, dt(), grau())
     })
 #     dt <- reactive({
@@ -387,11 +389,11 @@ server <- function(input, output, session) {
             runjs('document.getElementById("recommendation_box").style.backgroundColor = "#f44336";')
             return(
                 
-                paste0(paste0("Pelo teste KPSS, a serie não é estacionaria com valor-p=", test$p.value), ". Refaça os ajustes necessarios")
+                paste0(paste0("Pelo teste KPSS, REJEITAMOS a hipotese de que a serie é estacionaria, com valor-p=", round(test$p.value,3)), ". Refaça os ajustes necessarios")
             )
         }else{
-            runjs('document.getElementById("recommendation_box").style.backgroundColor = "#f44336";')
-            return(paste0("Pelo teste KPSS, a serie é estacionaria com valor-p=", test$p.value))
+            runjs('document.getElementById("recommendation_box").style.backgroundColor = "#5b960e";')
+            return(paste0("Pelo teste KPSS, NÃO REJEITAMOS a hipotesede de que a serie é estacionaria, com valor-p=", round(test$p.value,3)))
         }
     })
 
@@ -400,87 +402,92 @@ server <- function(input, output, session) {
     dd = reactiveVal(NULL)
 
     output$recomendation_model <- renderText({
-        check <- function(val, n){
-            up = 2/sqrt(n)
+        test = tseries::kpss.test(decomposed_data())
+        if(test$p.value > 0.05){
+            runjs('document.getElementById("recommendation_box2").style.backgroundColor = "#5b960e";')
+            check <- function(val, n){
+                up = 2/sqrt(n)
 
-            for(i in c(1:30)){
-                if(abs(val$acf[i]) < up){
-                    if(i < 15){
+                for(i in c(1:30)){
+                    if(abs(val$acf[i]) < up){
+                        if(i < 15){
 
-                        return(i)
+                            return(i)
+                        }
+                        else{
+                            return(0)
+                        }
+                        
                     }
-                    else{
-                        return(0)
-                    }
-                    
                 }
+                return(0)
             }
-            return(0)
-        }
 
 
-        ma = check(
-            acf(decomposed_data(), pl=F,lag=30, na.action=na.pass), length(decomposed_data())
-        )
-        
-        ar = check(
-            pacf(decomposed_data(), pl=F,lag=30, na.action=na.pass), length(decomposed_data())
-        )
-
-        p(ma)
-        qq(ar)
-
-        if(input$transformation_sazonalidade == "Diferenciação"){
-             updateNumericInput(session, "ARIMA_i", value=input$transformation_sazonality_diff)
-        }else{
-             updateNumericInput(session, "ARIMA_i", value=0)
-        }
-       
-
-        
-
-        if (ma != 0 && ar != 0){
-            ma = ma - 1
-            updateNumericInput(session, "ARIMA_p", value=ar)
-            updateNumericInput(session, "ARIMA_q", value=ma)
-            if(input$transformation_sazonalidade == "Diferenciação"){
-                return(
-                paste0(paste0(paste0(
-                    paste0(
-                        paste0("Recomendamos que você use um modelo ARIMA com p=", ma),
-                        " e q="
-                    ),
-                    ar
-                ),""), "")
+            ma = check(
+                acf(decomposed_data(), pl=F,lag=30, na.action=na.pass), length(decomposed_data())
             )
-            }
-            else{
-                return(
-                paste0(
-                    paste0(
-                        paste0("Recomendamos que você use um modelo ARIMA com p=", ma),
-                        " e q="
-                    ),
-                    ar
-                )
-            )
-            }
             
-        } else if (ma == 0 && ar != 0){
-            updateNumericInput(session, "ARIMA_p", value=ar)
-            updateNumericInput(session, "ARIMA_q", value=0)
-            return(paste0("Recomendamos que você use um modelo AR com p=", ar))
-        } else if (ma != 0 && ar == 0){
-            ma = ma - 1
-            updateNumericInput(session, "ARIMA_p", value=0)
-            updateNumericInput(session, "ARIMA_q", value=ma)
-            return(paste0("Recomendamos que você use um modelo MA com q=", ma))
-        } else if (ma ==0 && ar == 0){
-            return("Não conseguimos recomendar nenhum modelo. Refaça as transformações.")
-        }
+            ar = check(
+                pacf(decomposed_data(), pl=F,lag=30, na.action=na.pass), length(decomposed_data())
+            )
 
+            p(ma)
+            qq(ar)
 
+            if(input$transformation_sazonalidade == "Diferenciação"){
+                updateNumericInput(session, "ARIMA_i", value=input$transformation_sazonality_diff)
+            }else{
+                updateNumericInput(session, "ARIMA_i", value=0)
+            }
         
+
+            
+
+            if (ma != 0 && ar != 0){
+                ma = ma - 1
+                updateNumericInput(session, "ARIMA_p", value=ar)
+                updateNumericInput(session, "ARIMA_q", value=ma)
+                if(input$transformation_sazonalidade == "Diferenciação"){
+                    return(
+                    paste0(paste0(paste0(
+                        paste0(
+                            paste0("Recomendamos que você use um modelo ARIMA com p=", ma),
+                            " e q="
+                        ),
+                        ar
+                    ),""), "")
+                )
+                }
+                else{
+                    return(
+                    paste0(
+                        paste0(
+                            paste0("Recomendamos que você use um modelo ARIMA com p=", ma),
+                            " e q="
+                        ),
+                        ar
+                    )
+                )
+                }
+                
+            } else if (ma == 0 && ar != 0){
+                updateNumericInput(session, "ARIMA_p", value=ar)
+                updateNumericInput(session, "ARIMA_q", value=0)
+                return(paste0("Recomendamos que você use um modelo AR com p=", ar))
+            } else if (ma != 0 && ar == 0){
+                ma = ma - 1
+                updateNumericInput(session, "ARIMA_p", value=0)
+                updateNumericInput(session, "ARIMA_q", value=ma)
+                return(paste0("Recomendamos que você use um modelo MA com q=", ma))
+            } else if (ma ==0 && ar == 0){
+                return("Não conseguimos recomendar nenhum modelo. Refaça as transformações.")
+            }
+
+
+        }else{
+            runjs('document.getElementById("recommendation_box2").style.backgroundColor = "transparent";')
+        }
 
         
     })
@@ -518,7 +525,7 @@ server <- function(input, output, session) {
 
     forecasted_data <- reactive({
         train_series <- get_train_timeseries_split(output, input, decomposed_data=dt)
-        get_forecast_data(output, input, adjusted_fit(), valores_ajustados_tendencia(), valores_ajustados_sazo(), train_series)
+        get_forecast_data(output, input, adjusted_fit(), valores_ajustados_tendencia(), valores_ajustados_sazo(), train_series, lambda())
     })
 
     output$forecast <- renderPlot({
@@ -532,7 +539,8 @@ server <- function(input, output, session) {
             valores_ajustados_tendencia(),
             valores_ajustados_sazo(),
             test_series, decomposed_data(),
-            train_series
+            train_series,
+            lambda()
         )
     })
 
@@ -765,6 +773,43 @@ server <- function(input, output, session) {
             shinyjs::toggle("tab_models")
         }
     })
+
+    observeEvent(input$ARIMA_Si, {
+      if(model_state() == T){
+            model_state(F)
+            shinyjs::toggle("tab_models")
+        }
+    })
+
+    observeEvent(input$ARIMA_Sp, {
+      if(model_state() == T){
+            model_state(F)
+            shinyjs::toggle("tab_models")
+        }
+    })
+
+    observeEvent(input$ARIMA_Sq, {
+      if(model_state() == T){
+            model_state(F)
+            shinyjs::toggle("tab_models")
+        }
+    })
+
+    observeEvent(input$confirm_filters, {
+      if(model_state() == T){
+            model_state(F)
+            shinyjs::toggle("tab_models")
+        }
+    })
+
+    observeEvent(input$sazofreq, {
+      if(model_state() == T){
+            model_state(F)
+            shinyjs::toggle("tab_models")
+        }
+    })
+
+
 
 
 

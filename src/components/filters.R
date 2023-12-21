@@ -400,7 +400,7 @@ filters2 <- div(
     div(
         class="",
         state_filter,
-        sickness_filter
+        # sickness_filter
         # seasonal_type_filter,
         # seasonal_window_year_filter,
         # seasonal_window_months_filter,

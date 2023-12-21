@@ -151,10 +151,6 @@ transformation_modeling <- div(
     div(
         class='transformation_text',
         'Modelagem da Tendencia',
-        bsPopover(
-            "transformation_tendency", "",
-            "Texto Texto Texto",
-        options = list(container = "body"))
     ),
     div(
         class='transformation_item',
@@ -164,7 +160,8 @@ transformation_modeling <- div(
                 c(
                     "Não Aplicar" ,
                     "Polinomio" ,
-                    "Linear por Partes"
+                    "Linear por Partes",
+                    "Box-Cox"
                 ),
                 selected="Não Aplicar"
             )
@@ -227,7 +224,8 @@ sazonality_modeling <- div(
             c(
                 "Não Aplicar",
                 "Senoide", 
-                "Fourier", "Media Movel"            )
+                "Fourier", "Media Movel"
+            )
         ),
         div(
             
@@ -329,6 +327,7 @@ autocorrelation_modeling <- div(
         class="recommendation",
         div(
             class="recommendation_box2",
+             id="recommendation_box2",
             
              div(
                 class="textaaa",

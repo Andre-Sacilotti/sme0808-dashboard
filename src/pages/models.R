@@ -80,7 +80,7 @@ css <- "
 .box_table {
      padding-left: 40px;
     paddding-bottom: 20px;
-    padding-top: 30px;
+    padding-top: 70px;
     align: center;
     padding-bottom: 40px;
 }
@@ -113,6 +113,9 @@ css <- "
     margin: 0 auto
 }
 
+.model_params2 {
+    padding-left: 30px;
+}
 
 
 "
@@ -141,11 +144,13 @@ prediction_div <- div(
     class="box-models",
     div(
         class='forecast',
-        div(
+       
+        shinycssloaders::withSpinner(plotOutput('forecast', width="80%")),
+         div(
             class="box_table",
-            tableOutput('forecast_metrics_')
+            shinycssloaders::withSpinner(plotlyOutput('forecast_metrics_', width="70%"))
+            # tableOutput('forecast_metrics_')
         ),
-        shinycssloaders::withSpinner(plotOutput('forecast', width="80%"))
         
         
     )
@@ -176,6 +181,7 @@ models_page <- div(
         radioButtons("model_choice", "Escolha de Modelo",
                 c(
                     "Auto ARIMA (Seleção Automatica)" ,
+                    "SARIMA" ,
                     "ARIMA" ,
                     "AR",
                     "MA"
@@ -185,29 +191,57 @@ models_page <- div(
         div(
             class="model_params",
             conditionalPanel(
-            "input.model_choice=='ARIMA' || input.model_choice=='AR' || input.model_choice=='ARMA'",
+            "input.model_choice=='ARIMA' || input.model_choice=='AR' || input.model_choice=='ARMA' || input.model_choice=='SARIMA'",
             numericInput("ARIMA_p",
-                "Parametro P (AR)", 2, min = 1, max = 100
+                "Parametro P (AR)", 2, min = 0, max = 100
             ),
         ),
          conditionalPanel(
-            "input.model_choice=='ARIMA'",
+            "input.model_choice=='ARIMA' || input.model_choice=='SARIMA'",
             numericInput("ARIMA_i",
-                "Parametro i (Diff)", 2, min = 1, max = 100
+                "Parametro D", 0, min = 0, max = 100
             ),
          ),
           conditionalPanel(
-            "input.model_choice=='ARIMA' || input.model_choice=='MA' || input.model_choice=='ARMA'",
+            "input.model_choice=='ARIMA' || input.model_choice=='MA' || input.model_choice=='ARMA' || input.model_choice=='SARIMA'",
             numericInput("ARIMA_q",
-                "Parametro Q (MA)", 2, min = 1, max = 100
+                "Parametro Q (MA)", 2, min = 0, max = 100
             )
         )
+        ),
+        div(
+            class="model_params2",
+            conditionalPanel(
+            "input.model_choice=='SARIMA'",
+            numericInput("ARIMA_Sp",
+                "Parametro Sazonal P", 1, min = 0, max = 100
+            ),
+        ),
+         conditionalPanel(
+            "input.model_choice=='SARIMA'",
+            numericInput("ARIMA_Si",
+                "Parametro Sazonal D", 0, min = 0, max = 100
+            ),
+         ),
+          conditionalPanel(
+            "input.model_choice=='SARIMA' ",
+            numericInput("ARIMA_Sq",
+                "Parametro Sazonal Q", 0, min = 0, max = 100
+            )
         )
+        ),
+        
         
         ),
         div(
             class="data_params",
-            numericInput("test_steps_slider", "Tamanho do Horizonte da Base de Teste", min = 1, max = 300, value = 7) #só troquei pra fazer sentido na predição diária tbm; se algm tiver solução melhor, faça
+            numericInput("test_steps_slider", "Tamanho do Horizonte da Base de Teste", min = 1, max = 300, value = 7), #só troquei pra fazer sentido na predição diária tbm; se algm tiver solução melhor, faça
+            conditionalPanel(
+            "input.model_choice=='SARIMA' || input.model_choice=='Auto ARIMA (Seleção Automatica)' ",
+            numericInput("sazofreq",
+                "Frequencia da Sazonalidade", 7, min = 1, max = 100
+            )
+        )
         )
     ),
 

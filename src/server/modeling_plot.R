@@ -122,6 +122,10 @@ dataset_after_tendency_transformation <- function(output, input, dt_ts, grau){
 
             return(modelo_sazonalidade)
 
+        } else if(input$transformation_tendency2 == "Box-Cox"){
+            
+            boxcox = BoxCox(dados_transformados, lambda='auto')
+            return(boxcox)
         }
         
         else {
